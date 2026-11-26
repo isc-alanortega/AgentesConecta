@@ -1,0 +1,11 @@
+{
+  "name": "ecosistema-engrama",
+  "displayName": "Ecosistema Agentes Engrama & Conecta",
+  "version": "1.0.0",
+  "description": "Suite centralizada de 6 agentes especializados (Estratega IA + 5 proyectos), reglas Metodología Engrama + PlantillaPWA, auditoría SQL Read-Only y automatización Plan Maestro / Turbo.",
+  "suggestedPrompts": [
+    "Plan Maestro para un nuevo módulo en GeoConecta o ConectaNegocios",
+    "Modo Turbo: investiga mejoras con el Estratega IA, arma el plan y prográmalo completo",
+    "Audita en modo lectura el esquema de BD del proyecto y genera propuesta de optimización"
+  ]
+}

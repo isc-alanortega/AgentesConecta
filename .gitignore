@@ -1,0 +1,35 @@
+# ======================================================================================
+# Repositorio: AgentesConecta (https://github.com/isc-alanortega/AgentesConecta.git)
+# Estrategia Whitelist: Versiona ÚNICAMENTE el Ecosistema de Agentes (Antigravity + Cursor)
+# e ignora automáticamente todos los repositorios hijos (GeoConecta, ConectaNegocios,
+# SANTIAGOIA, OficinaIA, Test Proyecto, PlantillaPWA, etc.) y los worktrees temporales.
+# ======================================================================================
+
+# 1. Ignorar todo en la raíz por defecto (protege tus otros repositorios Git hijos)
+/*
+
+# 2. Permitir explícitamente los archivos y carpetas del Ecosistema de Agentes (Antigravity + Cursor)
+!.gitignore
+!GEMINI.md
+!AGENTS.md
+!README-CURSOR.md
+!.agents/
+!.agents/**
+!.cursor/
+!.cursor/**
+!agentes/
+!agentes/**
+!Regla-MetodologiaEngrama/
+!Regla-MetodologiaEngrama/**
+!.worktrees/
+!.worktrees/.gitkeep
+
+# 3. Ignorar cualquier archivo temporal, caché Python o worktree activo dentro de las rutas permitidas
+.worktrees/*
+!.worktrees/.gitkeep
+**/__pycache__/
+**/*.pyc
+**/.DS_Store
+**/Thumbs.db
+*.tmp
+*.log
