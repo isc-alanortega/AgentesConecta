@@ -1,4 +1,7 @@
-# Guía de Instalación Rápida en CURSOR IDE — Ecosistema `AgentesConecta` + `Oficina-IA-Conecta`
+# Guía de Instalación en CURSOR IDE — Ecosistema `AgentesConecta` + `Oficina-IA-Conecta`
+
+> **¿Quieres que Cursor instale y configure TODO solo sin escribir comandos?**
+> Pásale a Cursor el archivo **[INSTALAR-EN-CURSOR.md](./INSTALAR-EN-CURSOR.md)** en el chat (`Ctrl + I` en modo **Agent**) y dile: *"Ejecuta las instrucciones de este archivo e instala todo automáticamente"*. Cursor clonará ambos repositorios, instalará dependencias, configurará `.cursor/` y dejará compilada la Oficina 3D por ti.
 
 Este repositorio (`AgentesConecta`) contiene la configuración completa de **7 Subagentes IA**, **3 Skills**, **Reglas Clean Architecture Engrama** y **Firewall SQL 100% Read-Only** compatible de forma nativa tanto con **Cursor IDE** como con **Google Antigravity**.
 

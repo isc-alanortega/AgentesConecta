@@ -11,17 +11,17 @@ Diseñado para máxima velocidad y cero interrupciones al usuario.
 ## Fase 1: Análisis + Estratega IA + Guardado de Plan (si aún no existe un plan aprobado)
 
 Si el usuario te dio una instrucción nueva directa para programar:
-1. Lee `D:\Proyectos\PlantillaPWA\AGENTS.md` y los docs aplicables de `D:\Proyectos\Regla-MetodologiaEngrama\`.
-2. Inspecciona en paralelo el código actual del proyecto y la BD en modo **solo lectura** con `python "D:\Proyectos\agentes\herramientas\db_readonly_query.py"`.
+1. Lee `./PlantillaPWA\AGENTS.md` y los docs aplicables de `./Regla-MetodologiaEngrama\`.
+2. Inspecciona en paralelo el código actual del proyecto y la BD en modo **solo lectura** con `python "./agentes\herramientas\db_readonly_query.py"`.
 3. Invoca a `agente-estratega-ia` (delegando al subagente en `.cursor/agents/`) para enriquecer el requerimiento con mejoras profesionales de UX, negocio, rendimiento y seguridad que encajen en Engrama.
-4. Guarda el Plan Maestro resultante en `D:\Proyectos\agentes\planes\<Proyecto>\PLAN-<slug>.md`.
+4. Guarda el Plan Maestro resultante en `./agentes\planes\<Proyecto>\PLAN-<slug>.md`.
 
 *(Si el usuario ya aprobó un archivo `PLAN-*.md` existente, léelo directo y pasa a la Fase 2).*
 
 ## Fase 2: Generación de Script SQL Pendiente (Cero Escritura en BD)
 
 1. Escribe el script SQL completo, idempotente (`IF NOT EXISTS` / `CREATE OR ALTER PROCEDURE`), comentado y con el esquema correcto (`GCIA`, `CNIA` o `SCIA`) en:
-   `D:\Proyectos\agentes\scripts-sql-pendientes\<Proyecto>\<YYYYMMDD_HHMM>_<slug>.sql`
+   `./agentes\scripts-sql-pendientes\<Proyecto>\<YYYYMMDD_HHMM>_<slug>.sql`
 2. **JAMÁS** ejecutes ese script en la base de datos. Alan lo revisará y correrá personalmente.
 
 ## Fase 3: Programación End-to-End Autónoma (Molde `PlantillaPWA`)
@@ -37,12 +37,12 @@ Delega al subagente del proyecto (`agente-geoconecta`, `agente-conectanegocios`,
 ## Fase 4: Compilación y Verificación E2E
 
 1. Ejecuta `dotnet build` en la solución o proyectos modificados. Si aparece cualquier error o warning crítico de tipos, **corrígelo tú mismo en el acto** y vuelve a compilar hasta obtener `0 Error(s)`.
-2. Si aplica actualizar o crear spec en `D:\Proyectos\Test Proyecto\PruebasE2E`, coordínalo con `agente-qa-e2e`.
+2. Si aplica actualizar o crear spec en `./Test Proyecto\PruebasE2E`, coordínalo con `agente-qa-e2e`.
 
 ## Fase 5: Entrega Ejecutiva
 
 Presenta al usuario:
-- Enlace al **Plan Maestro** ejecutado en `D:\Proyectos\agentes\planes\...`.
-- **ACCIÓN REQUERIDA POR ALAN (BD)**: Enlace directo al **Script SQL** en `D:\Proyectos\agentes\scripts-sql-pendientes\...` listo para que lo revise y corra en SQL Server.
+- Enlace al **Plan Maestro** ejecutado en `./agentes\planes\...`.
+- **ACCIÓN REQUERIDA POR ALAN (BD)**: Enlace directo al **Script SQL** en `./agentes\scripts-sql-pendientes\...` listo para que lo revise y corra en SQL Server.
 - Resumen de capas/archivos creados y confirmación de `dotnet build` exitoso.
 - Recordatorio de los comandos `/goal` y `/teamwork` para siguientes iteraciones o pruebas masivas.

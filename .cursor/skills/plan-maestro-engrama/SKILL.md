@@ -11,11 +11,11 @@ Ejecuta este procedimiento de corrido y **sin hacer micro-preguntas** al usuario
 ## Paso 1: Investigación en Paralelo (Contexto + BD Read-Only + Estratega IA)
 
 En un solo turno paralelo:
-1. **Metodología y Molde**: Lee `D:\Proyectos\PlantillaPWA\AGENTS.md` y los documentos relevantes de `D:\Proyectos\Regla-MetodologiaEngrama\` (`0` al `8`).
+1. **Metodología y Molde**: Lee `./PlantillaPWA\AGENTS.md` y los documentos relevantes de `./Regla-MetodologiaEngrama\` (`0` al `8`).
 2. **Estado Actual del Proyecto y BD**:
-   - Inspecciona los módulos relacionados del proyecto destino en `D:\Proyectos\<Proyecto>`.
+   - Inspecciona los módulos relacionados del proyecto destino en `./<Proyecto>`.
    - Si el proyecto tiene BD (`geoconecta` [`GCIA`], `conectanegocios` [`CNIA`], `santiagoia` [`SCIA`]), ejecuta en modo **100% lectura**:
-     `python "D:\Proyectos\agentes\herramientas\db_readonly_query.py" --project <proyecto> --mode overview` (y `--mode table` / `--mode sp` en las tablas/SPs relacionados).
+     `python "./agentes\herramientas\db_readonly_query.py" --project <proyecto> --mode overview` (y `--mode table` / `--mode sp` en las tablas/SPs relacionados).
 3. **Elevación Profesional con `agente-estratega-ia`**:
    - Lanza el subagente `@agente-estratega-ia` (definido en `.cursor/agents/agente-estratega-ia.md`) pasándole el requerimiento del usuario, el proyecto destino y el resumen de lo que ya existe, pidiéndole investigar mejoras de nivel empresarial (UX/UI, KPIs, seguridad, rendimiento, casos borde y criterios E2E).
 
@@ -23,7 +23,7 @@ En un solo turno paralelo:
 
 1. Fusiona lo que pidió el usuario con las mejores propuestas de `agente-estratega-ia`.
 2. Guarda el Plan Maestro completo en:
-   `D:\Proyectos\agentes\planes\<Proyecto>\PLAN-<slug-descriptivo>.md`
+   `./agentes\planes\<Proyecto>\PLAN-<slug-descriptivo>.md`
    El documento DEBE contener:
    - **1. Objetivo y Mejoras Pro Integradas** (qué pidió Alan + qué aportó `agente-estratega-ia`).
    - **2. Diseño de Base de Datos (Esquema `GCIA`/`CNIA`/`SCIA`)**: Tablas nuevas/modificadas, tipos `DT*` (TVP), y contrato exacto de Stored Procedures (`spGet*`, `spSave*` con `bResult` y `vchMessage`).
@@ -33,7 +33,7 @@ En un solo turno paralelo:
    - **6. Plan de Pruebas Automatizadas (`Test Proyecto`)**: Flujos exactos para `PruebasE2E` y `e2e-admin`.
    - **7. Checklist de Ejecución Rápida** por fases.
 3. Si el desarrollo requiere cambios en SQL Server, deja de una vez el script `.sql` propuesto listo para revisión humana en:
-   `D:\Proyectos\agentes\scripts-sql-pendientes\<Proyecto>\<YYYYMMDD_HHMM>_<slug>.sql` (recuerda: **NUNCA** ejecutarlo contra la BD).
+   `./agentes\scripts-sql-pendientes\<Proyecto>\<YYYYMMDD_HHMM>_<slug>.sql` (recuerda: **NUNCA** ejecutarlo contra la BD).
 
 ## Paso 3: Entrega al Usuario + Recordatorio Obligatorio de Comandos
 

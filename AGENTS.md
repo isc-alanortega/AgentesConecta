@@ -1,33 +1,33 @@
 # Ecosistema Conecta & Engrama — Instrucciones Globales (Cursor & Antigravity)
 
-> Archivo sincronizado automáticamente por `python ./agentes/herramientas/sync_cursor.py` para la ruta local `D:\Proyectos`.
+> Archivo sincronizado automáticamente por `python ./agentes/herramientas/sync_cursor.py` (rutas portátiles relativas al workspace raíz).
 > Compatible con **Cursor IDE** (`.cursor/rules`, `.cursor/agents`, `.cursor/skills`, `.cursor/hooks.json`) y **Google Antigravity** (`GEMINI.md`, `.agents/`).
 
-# Reglas Globales del Ecosistema Engrama (`D:\Proyectos`)
+# Reglas Globales del Ecosistema Engrama (`.`)
 
-Este archivo rige a **todos los agentes** y conversaciones del ecosistema Conecta / Engrama en `D:\Proyectos`.
+Este archivo rige a **todos los agentes** y conversaciones del ecosistema Conecta / Engrama en `.`.
 
 ## 1. Mapa Oficial de Proyectos y Esquemas SQL
 
-| Proyecto | Ruta en `D:\Proyectos\` | Esquema SQL (`Engrama`) | Agente Especialista |
+| Proyecto | Ruta en `./` | Esquema SQL (`Engrama`) | Agente Especialista |
 | :--- | :--- | :--- | :--- |
 | **Innovación y Mejora Pro** | Transversal a todos | Todos (vía lectura) | `agente-estratega-ia` |
-| **GeoConecta** | `D:\Proyectos\GeoConecta` | `GCIA` | `agente-geoconecta` |
-| **ConectaNegocios** | `D:\Proyectos\ConectaNegocios` | `CNIA` | `agente-conectanegocios` |
-| **Repo Conecta Negocios Landing** | `D:\Proyectos\Repo Conecta Negocios Landing` | N/A (Estático / Marketing) | `agente-conectalanding` |
-| **SANTIAGOIA** | `D:\Proyectos\SANTIAGOIA` | `SCIA` | `agente-santiagoia` |
-| **Test Proyecto (E2E + Admin)** | `D:\Proyectos\Test Proyecto` | N/A (Playwright + Blazor Admin) | `agente-qa-e2e` |
+| **GeoConecta** | `./GeoConecta` | `GCIA` | `agente-geoconecta` |
+| **ConectaNegocios** | `./ConectaNegocios` | `CNIA` | `agente-conectanegocios` |
+| **Repo Conecta Negocios Landing** | `./Repo Conecta Negocios Landing` | N/A (Estático / Marketing) | `agente-conectalanding` |
+| **SANTIAGOIA** | `./SANTIAGOIA` | `SCIA` | `agente-santiagoia` |
+| **Test Proyecto (E2E + Admin)** | `./Test Proyecto` | N/A (Playwright + Blazor Admin) | `agente-qa-e2e` |
 
 ## 2. Protocolo Obligatorio Antes de Modificar Cualquier Proyecto
 
 Todo agente (principal o subagente) que vaya a planear o tocar código en un proyecto Engrama **DEBE** seguir este orden sin excepción y **sin detenerse a pedir permiso en cada paso**:
 
-1. **Consultar Metodología Engrama**: Revisar los documentos aplicables en `D:\Proyectos\Regla-MetodologiaEngrama\` (`0- EngramaCoreStandar.md` al `8- Guia Consultas SP.md`).
-2. **Espejear `PlantillaPWA`**: Revisar `D:\Proyectos\PlantillaPWA\AGENTS.md`, `D:\Proyectos\PlantillaPWA\GEMINI.md` y su `TestModule` como molde exacto de código (Clean Architecture: `SQL` → `Share (Objects + DtoModels)` → `Infrastructure (DT* + sp* + Repository con esquema)` → `Domain (MapperHelper + IResponseHelper)` → `Controller ([HttpPost("Post...")])` → `PWA (Main* + Grid/Form)`).
+1. **Consultar Metodología Engrama**: Revisar los documentos aplicables en `./Regla-MetodologiaEngrama\` (`0- EngramaCoreStandar.md` al `8- Guia Consultas SP.md`).
+2. **Espejear `PlantillaPWA`**: Revisar `./PlantillaPWA\AGENTS.md`, `./PlantillaPWA\GEMINI.md` y su `TestModule` como molde exacto de código (Clean Architecture: `SQL` → `Share (Objects + DtoModels)` → `Infrastructure (DT* + sp* + Repository con esquema)` → `Domain (MapperHelper + IResponseHelper)` → `Controller ([HttpPost("Post...")])` → `PWA (Main* + Grid/Form)`).
 3. **Analizar el Proyecto Actual + Base de Datos en SOLO LECTURA**:
    - Inspeccionar los módulos existentes del proyecto destino.
    - Consultar la BD real usando **exclusivamente** la herramienta de solo lectura:
-     `python "D:\Proyectos\agentes\herramientas\db_readonly_query.py" --project <geoconecta|conectanegocios|santiagoia> --mode <overview|table|udtt|sp|query>`
+     `python "./agentes\herramientas\db_readonly_query.py" --project <geoconecta|conectanegocios|santiagoia> --mode <overview|table|udtt|sp|query>`
 4. **Elevar el Nivel con `agente-estratega-ia` (Obligatorio en Nuevos Desarrollos y Planes)**:
    - Tanto en modalidad **Solo Plan Maestro** como en modalidad **Turbo (Plan + Programar Todo)**, se **DEBE** invocar primero a `agente-estratega-ia` (el subagente `@agente-estratega-ia` (definido en `.cursor/agents/agente-estratega-ia.md`)).
    - `agente-estratega-ia` investiga mejores prácticas de la industria, UX/UI moderna, casos borde, seguridad, rendimiento y arquitectura empresarial, devolviendo mejoras concretas que se fusionan con la idea original del usuario para lograr un resultado mucho más profesional.
@@ -36,18 +36,18 @@ Todo agente (principal o subagente) que vaya a planear o tocar código en un pro
 
 - **PROHIBIDO** ejecutar `INSERT`, `UPDATE`, `DELETE`, `MERGE`, `ALTER`, `CREATE`, `DROP`, `TRUNCATE` o `EXEC spSave*` contra la base de datos.
 - Todo cambio de BD (tablas, tipos `DT*`, Stored Procedures `spGet*` / `spSave*` con `bResult` y `vchMessage`) se **escribe en un archivo `.sql` numerado y bien documentado** dentro de:
-  `D:\Proyectos\agentes\scripts-sql-pendientes\<Proyecto>\<YYYYMMDD_HHMM>_<modulo>.sql`
+  `./agentes\scripts-sql-pendientes\<Proyecto>\<YYYYMMDD_HHMM>_<modulo>.sql`
   (y cuando aplique al historial del repo, en su carpeta `BaseDatos/` o `SQL/`), avisándole claramente al usuario qué archivo debe revisar y ejecutar él mismo.
 
 ## 4. Dos Modalidades de Trabajo (Ambas pasan por `agente-estratega-ia`)
 
 1. **Modalidad A — "Plan Maestro" (cuando el usuario pide analizar, diseñar o armar plan)**:
    - Ejecuta el análisis silencioso (Metodología + `PlantillaPWA` + Repo + BD Read-Only) + consulta a `agente-estratega-ia`.
-   - Guarda el plan amplio y detallado en `D:\Proyectos\agentes\planes\<Proyecto>\PLAN-<nombre>.md` (incluyendo: requerimiento original + mejoras pro del Estratega IA, diseño de BD, contratos Share, capas API, pantallas UI, casos E2E) y deja el borrador `.sql` si aplica en `scripts-sql-pendientes`.
+   - Guarda el plan amplio y detallado en `./agentes\planes\<Proyecto>\PLAN-<nombre>.md` (incluyendo: requerimiento original + mejoras pro del Estratega IA, diseño de BD, contratos Share, capas API, pantallas UI, casos E2E) y deja el borrador `.sql` si aplica en `scripts-sql-pendientes`.
    - Espera el visto bueno del usuario para programar.
 
 2. **Modalidad B — "Turbo / Plan + Programar Todo" (cuando el usuario pide hacerlo/programarlo directo o ejecutar un plan)**:
-   - Ejecuta el análisis + consulta a `agente-estratega-ia`, guarda el Plan Maestro en `D:\Proyectos\agentes\planes\<Proyecto>\PLAN-<nombre>.md`, genera el script `.sql` pendiente en `D:\Proyectos\agentes\scripts-sql-pendientes\<Proyecto>\`, y **de corrido sin hacer micro-preguntas** programa todas las capas C#/Blazor/TS siguiendo `PlantillaPWA`, ejecuta `dotnet build` hasta dejar `0 errores`, actualiza `docs/agentes/handoff-ui.md` cuando hay UI y entrega el resumen ejecutivo final.
+   - Ejecuta el análisis + consulta a `agente-estratega-ia`, guarda el Plan Maestro en `./agentes\planes\<Proyecto>\PLAN-<nombre>.md`, genera el script `.sql` pendiente en `./agentes\scripts-sql-pendientes\<Proyecto>\`, y **de corrido sin hacer micro-preguntas** programa todas las capas C#/Blazor/TS siguiendo `PlantillaPWA`, ejecuta `dotnet build` hasta dejar `0 errores`, actualiza `docs/agentes/handoff-ui.md` cuando hay UI y entrega el resumen ejecutivo final.
 
 ## 5. Regla Obligatoria de Cierre al Entregar Cualquier Plan de Trabajo
 
@@ -60,8 +60,8 @@ Todo agente (principal o subagente) que vaya a planear o tocar código en un pro
 ## 6. Regla de Convivencia Limpia con Repositorios Compartidos (Cero Conflicto con Compañero)
 
 - Los archivos `AGENTS.md` dentro de cada repositorio Git (`ConectaNegocios`, `SANTIAGOIA`, `Test Proyecto`, `GeoConecta`, `Repo Conecta Negocios Landing`) pertenecen al historial compartido con el equipo y contienen rutas relativas del entorno de otro desarrollador (ej. `../../Metodologia/TemplatePWA/` o la regla estricta de "no hacer backend hasta handoff UI").
-- **En este workspace `D:\Proyectos`, MANDAN ESTE ARCHIVO (`D:\Proyectos\agentes\plugins\ecosistema-engrama\rules\AGENTS.md`) y `D:\Proyectos\GEMINI.md` por encima de las rutas o bloqueos antiguos de esos `AGENTS.md` internos:**
-  1. Las rutas reales aquí son `D:\Proyectos\PlantillaPWA\` y `D:\Proyectos\Regla-MetodologiaEngrama\`.
+- **En este workspace `.`, MANDAN ESTE ARCHIVO (`./agentes\plugins\ecosistema-engrama\rules\AGENTS.md`) y `./GEMINI.md` por encima de las rutas o bloqueos antiguos de esos `AGENTS.md` internos:**
+  1. Las rutas reales aquí son `./PlantillaPWA\` y `./Regla-MetodologiaEngrama\`.
   2. Cuando Alan pida **Modo Turbo** o ejecute un **Plan Maestro**, sí estás autorizado a programar **Full-Stack completo (Frontend + Backend + Script SQL pendiente)** en una sola corrida sin detenerte, manteniendo `docs/agentes/handoff-ui.md` actualizado para que siga siendo 100% compatible con el flujo del compañero.
   3. **NO modifiques ni hagas commit** a los `AGENTS.md` de los repositorios Git a menos que Alan lo pida explícitamente.
 

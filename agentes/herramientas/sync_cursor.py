@@ -23,12 +23,12 @@ CURSOR_DIR = os.path.join(ROOT_DIR, ".cursor")
 
 
 def adapt_text_for_cursor(text: str) -> str:
-    """Reemplaza rutas fijas D:\\Proyectos por la ruta real del equipo actual o rutas relativas limpias,
-    y traduce llamadas exclusivas de Antigravity (`invoke_subagent`) a delegación estándar de Cursor."""
-    # Reemplazar D:\Proyectos o D:/Proyectos por la ruta real donde el desarrollador clonó el workspace
-    root_win = ROOT_DIR
-    text = text.replace(r"D:\Proyectos", root_win)
-    text = text.replace("D:/Proyectos", root_win.replace("\\", "/"))
+    """Convierte rutas fijas D:\\Proyectos a rutas relativas al workspace (./...) para que funcionen
+    en cualquier disco/carpeta sin ensuciar git status, y traduce invoke_subagent a formato Cursor."""
+    text = text.replace("D:\\Proyectos\\", "./")
+    text = text.replace("D:/Proyectos/", "./")
+    text = text.replace(r"D:\Proyectos", ".")
+    text = text.replace("D:/Proyectos", ".")
 
     # Adaptar instrucciones de subagentes para que funcionen tanto en Cursor como en Antigravity
     text = re.sub(
@@ -98,7 +98,7 @@ alwaysApply: true
     # 3. Generar AGENTS.md en la raíz del workspace para compatibilidad directa con Cursor y otros agentes
     root_agents_md = f"""# Ecosistema Conecta & Engrama — Instrucciones Globales (Cursor & Antigravity)
 
-> Archivo sincronizado automáticamente por `python ./agentes/herramientas/sync_cursor.py` para la ruta local `{ROOT_DIR}`.
+> Archivo sincronizado automáticamente por `python ./agentes/herramientas/sync_cursor.py` (rutas portátiles relativas al workspace raíz).
 > Compatible con **Cursor IDE** (`.cursor/rules`, `.cursor/agents`, `.cursor/skills`, `.cursor/hooks.json`) y **Google Antigravity** (`GEMINI.md`, `.agents/`).
 
 {ecosystem_body}
