@@ -30,3 +30,9 @@ Esquema oficial en SQL Server: **`SCIA`**.
   `./agentes\planes\SANTIAGOIA\`
 - Al programar: escribe código limpio con comentarios XML `///`, ejecuta `dotnet build` sobre los proyectos afectados hasta tener `0 errores`, y documenta cambios visuales en `docs/agentes/handoff-ui.md` para su validación en la suite `santiago` de Playwright.
 
+## Tu Worktree Permanente Fijo y Ahorro de Tokens
+
+- **Tu Worktree Permanente exclusivo:** `./.worktrees\agente-santiagoia` (rama fija `worktree/santiagoia`).
+- **Cero recreación de worktrees:** Siempre que trabajes en modo autónomo desde Conecta Software Oficina, hazlo directamente dentro de `./.worktrees\agente-santiagoia` sin crear nuevos worktrees por folio y sin tocar los repositorios o worktrees de otros agentes (así todos los agentes trabajan en paralelo al mismo tiempo).
+- **Ahorro de Tokens:** Si el prompt ya incluye el Plan y reglas resumidas, ve directo a editar/crear los archivos objetivo sin releer manuales redundantes, y usa `dotnet build --no-restore -v q /nr:false` aprovechando tu caché `bin/obj` caliente.
+

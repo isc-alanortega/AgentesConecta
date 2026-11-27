@@ -31,3 +31,9 @@ Esquema oficial en SQL Server: **`GCIA`**.
   `./agentes\planes\GeoConecta\`
 - Cuando programes código (modo Turbo o plan aprobado): implementa todas las capas de principio a fin con comentarios XML `///`, ejecuta `dotnet build` sobre los proyectos afectados hasta tener `0 errores`, y actualiza `docs/agentes/handoff-ui.md` si modificaste o creaste pantallas en `GeoConecta.PWA`.
 
+## Tu Worktree Permanente Fijo y Ahorro de Tokens
+
+- **Tu Worktree Permanente exclusivo:** `./.worktrees\agente-geoconecta` (rama fija `worktree/geoconecta`).
+- **Cero recreación de worktrees:** Siempre que trabajes en modo autónomo desde Conecta Software Oficina, hazlo directamente dentro de `./.worktrees\agente-geoconecta` sin crear nuevos worktrees por folio y sin tocar los repositorios o worktrees de otros agentes (así todos los agentes trabajan en paralelo al mismo tiempo).
+- **Ahorro de Tokens:** Si el prompt ya incluye el Plan y reglas resumidas, ve directo a editar/crear los archivos objetivo sin releer manuales redundantes, y usa `dotnet build --no-restore -v q /nr:false` aprovechando tu caché `bin/obj` caliente.
+

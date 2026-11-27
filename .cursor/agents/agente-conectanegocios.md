@@ -31,3 +31,9 @@ Esquema oficial en SQL Server: **`CNIA`**. Solución **.NET 9**.
   `./agentes\planes\ConectaNegocios\`
 - Al programar: mantén sincronizados los contratos entre `Share`, `API`, `SharedUI` y los clientes afectados, agrega documentación XML `///`, actualiza `docs/agentes/handoff-ui.md` cuando se toque UI indicando qué cliente (`Admin`, `Client`, `Propietarios`, etc.) cambió, y verifica con `dotnet build` hasta lograr `0 errores`.
 
+## Tu Worktree Permanente Fijo y Ahorro de Tokens
+
+- **Tu Worktree Permanente exclusivo:** `./.worktrees\agente-conectanegocios` (rama fija `worktree/conectanegocios`).
+- **Cero recreación de worktrees:** Siempre que trabajes en modo autónomo desde Conecta Software Oficina, hazlo directamente dentro de `./.worktrees\agente-conectanegocios` sin crear nuevos worktrees por folio y sin tocar los repositorios o worktrees de otros agentes (así todos los agentes trabajan en paralelo al mismo tiempo).
+- **Ahorro de Tokens:** Si el prompt ya incluye el Plan y reglas resumidas, ve directo a editar/crear los archivos objetivo sin releer manuales redundantes, y usa `dotnet build --no-restore -v q /nr:false` aprovechando tu caché `bin/obj` caliente.
+

@@ -4,14 +4,17 @@ Este archivo rige a **todos los agentes** y conversaciones del ecosistema Conect
 
 ## 1. Mapa Oficial de Proyectos y Esquemas SQL
 
-| Proyecto | Ruta en `D:\Proyectos\` | Esquema SQL (`Engrama`) | Agente Especialista |
-| :--- | :--- | :--- | :--- |
-| **Innovación y Mejora Pro** | Transversal a todos | Todos (vía lectura) | `agente-estratega-ia` |
-| **GeoConecta** | `D:\Proyectos\GeoConecta` | `GCIA` | `agente-geoconecta` |
-| **ConectaNegocios** | `D:\Proyectos\ConectaNegocios` | `CNIA` | `agente-conectanegocios` |
-| **Repo Conecta Negocios Landing** | `D:\Proyectos\Repo Conecta Negocios Landing` | N/A (Estático / Marketing) | `agente-conectalanding` |
-| **SANTIAGOIA** | `D:\Proyectos\SANTIAGOIA` | `SCIA` | `agente-santiagoia` |
-| **Test Proyecto (E2E + Admin)** | `D:\Proyectos\Test Proyecto` | N/A (Playwright + Blazor Admin) | `agente-qa-e2e` |
+| Proyecto | Ruta en `D:\Proyectos\` | Esquema SQL (`Engrama`) | Agente Especialista | Worktree Permanente Fijo |
+| :--- | :--- | :--- | :--- | :--- |
+| **Innovación y Mejora Pro** | Transversal a todos | Todos (vía lectura) | `agente-estratega-ia` | `D:\Proyectos\.worktrees\agente-estratega-ia` (`worktree/estratega-ia`) |
+| **GeoConecta** | `D:\Proyectos\GeoConecta` | `GCIA` | `agente-geoconecta` | `D:\Proyectos\.worktrees\agente-geoconecta` (`worktree/geoconecta`) |
+| **ConectaNegocios** | `D:\Proyectos\ConectaNegocios` | `CNIA` | `agente-conectanegocios` | `D:\Proyectos\.worktrees\agente-conectanegocios` (`worktree/conectanegocios`) |
+| **Repo Conecta Negocios Landing** | `D:\Proyectos\Repo Conecta Negocios Landing` | N/A (Estático / Marketing) | `agente-conectalanding` | `D:\Proyectos\.worktrees\agente-conectalanding` (`worktree/conectalanding`) |
+| **SANTIAGOIA** | `D:\Proyectos\SANTIAGOIA` | `SCIA` | `agente-santiagoia` | `D:\Proyectos\.worktrees\agente-santiagoia` (`worktree/santiagoia`) |
+| **Test Proyecto (E2E + Admin)** | `D:\Proyectos\Test Proyecto` | N/A (Playwright + Blazor Admin) | `agente-qa-e2e` | `D:\Proyectos\.worktrees\agente-qa-e2e` (`worktree/qa-e2e`) |
+| **Conecta Software Oficina** | `D:\Proyectos\OficinaIA` | `OFIA` / `dbo` | `agente-oficinaia` | `D:\Proyectos\.worktrees\agente-oficinaia` (`worktree/oficinaia`) |
+
+> **Regla de Worktree Único Permanente y Ahorro de Tokens:** Cada agente tiene **un único worktree fijo pre-creado** en `D:\Proyectos\.worktrees\<codigo-agente>`. En ejecución autónoma NUNCA se crean worktrees nuevos por cada folio: cada agente reutiliza siempre el suyo para mantener caliente su caché `bin/obj`, ahorrar tokens y poder trabajar **todos al mismo tiempo en paralelo** sin pisar el código de los demás.
 
 ## 2. Protocolo Obligatorio Antes de Modificar Cualquier Proyecto
 

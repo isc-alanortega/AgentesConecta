@@ -9,14 +9,17 @@ Este archivo rige a **todos los agentes** y conversaciones del ecosistema Conect
 
 ## 1. Mapa Oficial de Proyectos y Esquemas SQL
 
-| Proyecto | Ruta en `./` | Esquema SQL (`Engrama`) | Agente Especialista |
-| :--- | :--- | :--- | :--- |
-| **Innovación y Mejora Pro** | Transversal a todos | Todos (vía lectura) | `agente-estratega-ia` |
-| **GeoConecta** | `./GeoConecta` | `GCIA` | `agente-geoconecta` |
-| **ConectaNegocios** | `./ConectaNegocios` | `CNIA` | `agente-conectanegocios` |
-| **Repo Conecta Negocios Landing** | `./Repo Conecta Negocios Landing` | N/A (Estático / Marketing) | `agente-conectalanding` |
-| **SANTIAGOIA** | `./SANTIAGOIA` | `SCIA` | `agente-santiagoia` |
-| **Test Proyecto (E2E + Admin)** | `./Test Proyecto` | N/A (Playwright + Blazor Admin) | `agente-qa-e2e` |
+| Proyecto | Ruta en `./` | Esquema SQL (`Engrama`) | Agente Especialista | Worktree Permanente Fijo |
+| :--- | :--- | :--- | :--- | :--- |
+| **Innovación y Mejora Pro** | Transversal a todos | Todos (vía lectura) | `agente-estratega-ia` | `./.worktrees\agente-estratega-ia` (`worktree/estratega-ia`) |
+| **GeoConecta** | `./GeoConecta` | `GCIA` | `agente-geoconecta` | `./.worktrees\agente-geoconecta` (`worktree/geoconecta`) |
+| **ConectaNegocios** | `./ConectaNegocios` | `CNIA` | `agente-conectanegocios` | `./.worktrees\agente-conectanegocios` (`worktree/conectanegocios`) |
+| **Repo Conecta Negocios Landing** | `./Repo Conecta Negocios Landing` | N/A (Estático / Marketing) | `agente-conectalanding` | `./.worktrees\agente-conectalanding` (`worktree/conectalanding`) |
+| **SANTIAGOIA** | `./SANTIAGOIA` | `SCIA` | `agente-santiagoia` | `./.worktrees\agente-santiagoia` (`worktree/santiagoia`) |
+| **Test Proyecto (E2E + Admin)** | `./Test Proyecto` | N/A (Playwright + Blazor Admin) | `agente-qa-e2e` | `./.worktrees\agente-qa-e2e` (`worktree/qa-e2e`) |
+| **Conecta Software Oficina** | `./OficinaIA` | `OFIA` / `dbo` | `agente-oficinaia` | `./.worktrees\agente-oficinaia` (`worktree/oficinaia`) |
+
+> **Regla de Worktree Único Permanente y Ahorro de Tokens:** Cada agente tiene **un único worktree fijo pre-creado** en `./.worktrees\<codigo-agente>`. En ejecución autónoma NUNCA se crean worktrees nuevos por cada folio: cada agente reutiliza siempre el suyo para mantener caliente su caché `bin/obj`, ahorrar tokens y poder trabajar **todos al mismo tiempo en paralelo** sin pisar el código de los demás.
 
 ## 2. Protocolo Obligatorio Antes de Modificar Cualquier Proyecto
 

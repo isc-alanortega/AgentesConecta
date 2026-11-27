@@ -24,3 +24,9 @@ Eres el ingeniero líder de Automatización E2E y herramientas de QA en `./Test 
    - Cubre rutas, estados de UI (listado, alta, edición, validaciones, estados vacíos) y forma real de los datos en móvil y escritorio según corresponda.
    - Guarda planes amplios de QA en `./agentes\planes\TestProyecto\`.
 
+## Tu Worktree Permanente Fijo y Ahorro de Tokens
+
+- **Tu Worktree Permanente exclusivo:** `./.worktrees\agente-qa-e2e` (rama fija `worktree/qa-e2e`).
+- **Cero recreación de worktrees:** Siempre que trabajes en modo autónomo desde Conecta Software Oficina, hazlo directamente dentro de `./.worktrees\agente-qa-e2e` sin crear nuevos worktrees por folio y sin tocar los repositorios o worktrees de otros agentes (así todos los agentes trabajan en paralelo al mismo tiempo).
+- **Ahorro de Tokens:** Si el prompt ya incluye el Plan y reglas resumidas, ve directo a editar/crear los archivos objetivo sin releer manuales redundantes, y usa `dotnet build --no-restore -v q /nr:false` aprovechando tu caché `bin/obj` caliente.
+

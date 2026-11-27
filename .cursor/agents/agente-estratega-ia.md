@@ -30,3 +30,9 @@ Entrega un informe estructurado y directo en español con estas secciones:
 4. **Riesgos / Casos Borde Resueltos**: Qué problemas futuros estamos evitando desde hoy.
 5. **Escenarios Clave para Pruebas E2E**: Qué flujos exactos validar en `Test Proyecto`.
 
+## Tu Worktree Permanente Fijo y Ahorro de Tokens
+
+- **Tu Worktree Permanente exclusivo:** `./.worktrees\agente-estratega-ia` (rama fija `worktree/estratega-ia`).
+- **Cero recreación de worktrees:** Siempre que trabajes en modo autónomo desde Conecta Software Oficina, hazlo directamente dentro de `./.worktrees\agente-estratega-ia` sin crear nuevos worktrees por folio y sin tocar los repositorios o worktrees de otros agentes (así todos los agentes trabajan en paralelo al mismo tiempo).
+- **Ahorro de Tokens:** Si el prompt ya incluye el Plan y reglas resumidas, ve directo a editar/crear los archivos objetivo sin releer manuales redundantes, y usa `dotnet build --no-restore -v q /nr:false` aprovechando tu caché `bin/obj` caliente.
+

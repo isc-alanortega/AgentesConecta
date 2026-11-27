@@ -42,9 +42,13 @@ def ensure_oficina_repo():
 
 
 def sync_cursor_config():
-    step("3/5 Sincronizando reglas, 7 subagentes, 3 skills y Firewall SQL en .cursor/")
+    step("3/6 Sincronizando reglas, 7 subagentes, 3 skills y Firewall SQL en .cursor/")
     sync_script = os.path.join(ROOT_DIR, "agentes", "herramientas", "sync_cursor.py")
     subprocess.check_call([sys.executable, sync_script])
+    step("4/6 Inicializando 1 Worktree Permanente fijo para cada Agente (.worktrees/<agente>)")
+    wt_script = os.path.join(ROOT_DIR, "agentes", "herramientas", "inicializar_worktrees_agentes.py")
+    if os.path.isfile(wt_script):
+        subprocess.call([sys.executable, wt_script])
 
 
 def discover_existing_connection_string() -> str | None:

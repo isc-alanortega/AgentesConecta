@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 r"""
-Ejecutor Oficial Dual-IDE (Antigravity CLI `agy` + Cursor CLI `cursor-agent` / `agent`)
-Cuando el Patrón o el equipo aprueba una orden desde Conecta Software Oficina:
-1. Autodetecta `PROYECTOS_ROOT` (funciona en D:\Proyectos, C:\Conecta o cualquier ruta del compañero).
-2. Prepara una rama y carpeta aislada `git worktree` en `<PROYECTOS_ROOT>\.worktrees\<Folio>`.
-3. Detecta automáticamente qué motor CLI usar:
-   - Si existe `agy.exe` (Antigravity) -> ejecuta `agy --mode auto --add-dir <ROOT> --output-format stream-json --print ...`
-   - Si existe `cursor-agent` / `agent` (Cursor) -> ejecuta `cursor-agent -p --force --output-format stream-json ...`
-   (También se puede forzar con `--cli agy` o `--cli cursor` o variable `CONECTA_AGENT_CLI`).
-4. Transmite progreso en vivo al mundo 3D, verifica `dotnet build` (`0 errores`) y hace commit en la rama aislada.
+Ejecutor Oficial Dual-IDE con Worktree Permanente por Agente y Modo Ultra-Ahorro de Tokens
+(`ejecutar_orden_agy.py` — Antigravity CLI `agy` + Cursor CLI `cursor-agent` / `agent`)
+
+Características clave:
+1. UN SOLO WORKTREE FIJO POR AGENTE: `<PROYECTOS_ROOT>\.worktrees\<codigo-agente>` en rama `agentes/<short>`.
+   - Mantiene caliente `bin/` y `obj/` de .NET (`dotnet build --no-restore /nr:false`), bajando builds de ~100s a ~4s.
+   - Permite que TODOS los agentes trabajen AL MISMO TIEMPO en paralelo sin pisarse jamás.
+2. ULTRA-AHORRO DE TOKENS:
+   - Prompt compacto con Cheat-Sheet Engrama pre-digerido (cero `read_file` redundantes de manuales largos).
+   - Sin `--add-dir <PROYECTOS_ROOT>`: el CLI solo ve su propio worktree + carpeta de SQL pendientes.
+   - Omite `dotnet build` cuando la tarea solo genera `.sql` / `.md` / `.html` / `.js` / `.css`.
 """
 import argparse
 import datetime
@@ -37,7 +39,6 @@ DEFAULT_CURSOR_PATHS = [
 
 
 def resolve_agent_cli(preferred: str = "auto") -> tuple[str, str]:
-    """Devuelve ('agy' | 'cursor', ruta_ejecutable)."""
     pref = (preferred or os.environ.get("CONECTA_AGENT_CLI") or "auto").lower()
 
     def find_agy():
@@ -56,7 +57,7 @@ def resolve_agent_cli(preferred: str = "auto") -> tuple[str, str]:
         c = find_cursor()
         if c:
             return "cursor", c
-        raise FileNotFoundError("Se solicitó Cursor CLI pero no se encontró 'cursor-agent' ni 'agent' en PATH.")
+        raise FileNotFoundError("Se solicitó Cursor CLI pero no se encontró 'cursor-agent' ni 'agent'.")
 
     if pref == "agy":
         a = find_agy()
@@ -64,7 +65,6 @@ def resolve_agent_cli(preferred: str = "auto") -> tuple[str, str]:
             return "agy", a
         raise FileNotFoundError("Se solicitó Antigravity CLI pero no se encontró 'agy.exe'.")
 
-    # Auto-detect: preferir agy si existe, si no usar Cursor CLI
     a = find_agy()
     if a:
         return "agy", a
@@ -72,15 +72,17 @@ def resolve_agent_cli(preferred: str = "auto") -> tuple[str, str]:
     if c:
         return "cursor", c
 
-    raise FileNotFoundError(
-        "No se encontró ni Antigravity CLI ('agy') ni Cursor CLI ('cursor-agent' / 'agent') instalados en este equipo."
-    )
+    raise FileNotFoundError("No se encontró ni Antigravity CLI ('agy') ni Cursor CLI ('cursor-agent').")
 
 
-def run_cmd(cmd: list[str], cwd: str | None = None, timeout: int = 180) -> tuple[int, str]:
+def run_cmd(cmd: list[str], cwd: str | None = None, timeout: int = 180, extra_env: dict | None = None) -> tuple[int, str]:
+    env = os.environ.copy()
+    if extra_env:
+        env.update(extra_env)
     proc = subprocess.run(
         cmd,
         cwd=cwd,
+        env=env,
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -100,7 +102,7 @@ def post_live_progress(
     branch: str,
     worktree_dir: str,
     estatus: str = "PROGRAMANDO_WORKTREE",
-    zona: str = "WORKTREE_LAB",
+    zona: str = "CUBICULO",
     anim: str = "BUILDING",
     sql_path: str = "",
     build_ok: bool = True,
@@ -130,38 +132,97 @@ def post_live_progress(
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=6):
+        with urllib.request.urlopen(req, timeout=5):
             pass
     except Exception:
         pass
 
 
-def map_project_folder(project_name: str) -> tuple[str, str]:
-    p = project_name.strip()
-    low = p.lower()
-    if "geo" in low:
-        return os.path.join(PROYECTOS_ROOT, "GeoConecta"), "GeoConecta"
-    if "landing" in low:
-        for cand in ["Repo Conecta Negocios Landing", "ConectaNegociosFrontPage", "ConectaLanding"]:
-            full = os.path.join(PROYECTOS_ROOT, cand)
+def resolve_canonical_target(agente_code: str, project_name: str) -> tuple[str, str, str, str]:
+    """
+    Devuelve (canonical_worktree_folder_name, branch_name, repo_dir, sql_subfolder).
+    Garantiza que cada proyecto/agente tenga UN SOLO worktree permanente y jamás colisionen dos agentes.
+    """
+    low = (project_name or "").strip().lower()
+    ag_low = (agente_code or "").strip().lower()
+
+    def pick_existing(cands: list[str], fallback: str) -> str:
+        for c in cands:
+            full = os.path.join(PROYECTOS_ROOT, c)
             if os.path.isdir(full):
-                return full, "ConectaLanding"
-        return os.path.join(PROYECTOS_ROOT, "Repo Conecta Negocios Landing"), "ConectaLanding"
-    if "negocio" in low:
-        return os.path.join(PROYECTOS_ROOT, "ConectaNegocios"), "ConectaNegocios"
-    if "santiago" in low:
-        for cand in ["SANTIAGOIA", "SantiagoConectaIA"]:
-            full = os.path.join(PROYECTOS_ROOT, cand)
-            if os.path.isdir(full):
-                return full, "SANTIAGOIA"
-        return os.path.join(PROYECTOS_ROOT, "SANTIAGOIA"), "SANTIAGOIA"
+                return full
+        return os.path.join(PROYECTOS_ROOT, fallback)
+
+    if "geo" in low or "geoconecta" in ag_low:
+        return "agente-geoconecta", "worktree/geoconecta", pick_existing(["GeoConecta"], "GeoConecta"), "GeoConecta"
+    if "landing" in low or "front" in low or "conectalanding" in ag_low:
+        repo = pick_existing(
+            ["Repo Conecta Negocios Landing", "ConectaNegociosFrontPage", "ConectaLanding"],
+            "Repo Conecta Negocios Landing",
+        )
+        return "agente-conectalanding", "worktree/conectalanding", repo, "ConectaLanding"
+    if "negocio" in low or "conectanegocios" in ag_low:
+        return (
+            "agente-conectanegocios",
+            "worktree/conectanegocios",
+            pick_existing(["ConectaNegocios"], "ConectaNegocios"),
+            "ConectaNegocios",
+        )
+    if "santiago" in low or "santiagoia" in ag_low:
+        repo = pick_existing(["SANTIAGOIA", "SantiagoConectaIA"], "SANTIAGOIA")
+        return "agente-santiagoia", "worktree/santiagoia", repo, "SANTIAGOIA"
     if "test" in low or "qa" in low or "e2e" in low:
-        for cand in ["Test Proyecto", "PruebasE2E", "E2E"]:
-            full = os.path.join(PROYECTOS_ROOT, cand)
-            if os.path.isdir(full):
-                return full, "TestProyecto"
-        return os.path.join(PROYECTOS_ROOT, "Test Proyecto"), "TestProyecto"
-    return os.path.join(PROYECTOS_ROOT, p), re.sub(r"\s+", "", p)
+        repo = pick_existing(["Test Proyecto", "PruebasE2E", "E2E"], "Test Proyecto")
+        return "agente-qa-e2e", "worktree/qa-e2e", repo, "TestProyecto"
+    if "oficina" in low or "oficinaia" in ag_low:
+        repo = pick_existing(["OficinaIA"], "OficinaIA")
+        return "agente-oficinaia", "worktree/oficinaia", repo, "OficinaIA"
+    if "control" in low or "conectacontrol" in ag_low:
+        repo = pick_existing(["ConectaControl"], "ConectaControl")
+        return "agente-conectacontrol", "worktree/conectacontrol", repo, "ConectaControl"
+
+    # Transversal / Estratega IA sobre el repo raíz de AgentesConecta
+    short = ag_low.replace("agente-", "") or "estratega-ia"
+    return f"agente-{short}", f"worktree/{short}", PROYECTOS_ROOT, "Transversal"
+
+
+def ensure_persistent_agent_worktree(repo_dir: str, worktree_dir: str, branch_name: str, folio: str) -> str:
+    os.makedirs(os.path.dirname(worktree_dir), exist_ok=True)
+    run_cmd(["git", "config", "--global", "--add", "safe.directory", repo_dir.replace("\\", "/")])
+
+    git_marker = os.path.join(worktree_dir, ".git")
+    if os.path.isdir(worktree_dir) and os.path.exists(git_marker):
+        run_cmd(["git", "config", "--global", "--add", "safe.directory", worktree_dir.replace("\\", "/")])
+        # Si quedó algún archivo a medias de una cancelación previa, resguardarlo limpio en stash sin perder caché bin/obj
+        _, dirty = run_cmd(["git", "-C", worktree_dir, "status", "--porcelain"])
+        if dirty.strip():
+            run_cmd(["git", "-C", worktree_dir, "stash", "push", "-u", "-m", f"auto-save-before-{folio}"])
+        return f"Worktree permanente reutilizado: {worktree_dir} ({branch_name})"
+
+    if os.path.isdir(worktree_dir):
+        shutil.rmtree(worktree_dir, ignore_errors=True)
+
+    run_cmd(["git", "-C", repo_dir, "worktree", "prune"])
+    code_br, _ = run_cmd(["git", "-C", repo_dir, "rev-parse", "--verify", branch_name])
+    if code_br == 0:
+        rc, out = run_cmd(["git", "-C", repo_dir, "worktree", "add", "--force", worktree_dir, branch_name])
+    else:
+        rc, out = run_cmd(["git", "-C", repo_dir, "worktree", "add", "--force", worktree_dir, "-b", branch_name])
+
+    if rc != 0:
+        raise RuntimeError(f"No se pudo inicializar el worktree permanente ({rc}): {out}")
+
+    run_cmd(["git", "config", "--global", "--add", "safe.directory", worktree_dir.replace("\\", "/")])
+    return f"Worktree permanente inicializado: {worktree_dir} ({branch_name})"
+
+
+def find_primary_sln(worktree_dir: str) -> str | None:
+    for root_w, dirs_w, files_w in os.walk(worktree_dir):
+        dirs_w[:] = [d for d in dirs_w if d.lower() not in ("bin", "obj", "node_modules", ".git")]
+        for fw in files_w:
+            if fw.endswith((".slnx", ".sln")):
+                return os.path.join(root_w, fw)
+    return None
 
 
 def extract_thought_from_stream_line(line: str) -> str | None:
@@ -175,89 +236,66 @@ def extract_thought_from_stream_line(line: str) -> str | None:
 
     raw_str = json.dumps(ev, ensure_ascii=False)
     for tool_key, label in [
-        ("write_file", "✍️ Creando archivo"),
-        ("edit_file", "🛠️ Editando código"),
-        ("Write", "✍️ Creando archivo"),
-        ("Edit", "🛠️ Editando código"),
-        ("run_command", "🔨 Ejecutando validación"),
-        ("Shell", "🔨 Ejecutando comando"),
-        ("read_file", "📖 Analizando código fuente"),
+        ("write_file", "✍️ Escribiendo"),
+        ("edit_file", "🛠️ Editando"),
+        ("Write", "✍️ Escribiendo"),
+        ("Edit", "🛠️ Editando"),
+        ("run_command", "🔨 Validando"),
+        ("Shell", "🔨 Ejecutando"),
+        ("read_file", "📖 Revisando"),
     ]:
         if f'"{tool_key}"' in raw_str:
             m_path = re.search(r'"(?:Path|path|file_path)"\s*:\s*"([^"]+)"', raw_str)
             if m_path:
                 fname = os.path.basename(m_path.group(1).replace("\\\\", "\\"))
-                return f"{label}: {fname} en Worktree Lab..."
-            m_sum = re.search(r'"toolSummary"\s*:\s*"([^"]+)"', raw_str)
-            if m_sum:
-                return f"{label}: {m_sum.group(1)}..."
-            return f"{label} en el Worktree aislado..."
-
+                return f"{label} {fname} en su worktree fijo..."
+            return f"{label} en su worktree permanente..."
     return None
 
 
-def prepare_worktree(repo_dir: str, worktree_dir: str, branch_name: str) -> str:
-    os.makedirs(os.path.dirname(worktree_dir), exist_ok=True)
-    run_cmd(["git", "config", "--global", "--add", "safe.directory", repo_dir.replace("\\", "/")])
-
-    if os.path.isdir(worktree_dir) and os.path.exists(os.path.join(worktree_dir, ".git")):
-        run_cmd(["git", "config", "--global", "--add", "safe.directory", worktree_dir.replace("\\", "/")])
-        return f"Worktree reutilizado en {worktree_dir} ({branch_name})"
-
-    if os.path.isdir(worktree_dir):
-        shutil.rmtree(worktree_dir, ignore_errors=True)
-
-    code_br, _ = run_cmd(["git", "-C", repo_dir, "rev-parse", "--verify", branch_name])
-    if code_br == 0:
-        rc, out = run_cmd(["git", "-C", repo_dir, "worktree", "add", worktree_dir, branch_name])
-    else:
-        rc, out = run_cmd(["git", "-C", repo_dir, "worktree", "add", worktree_dir, "-b", branch_name])
-
-    if rc != 0:
-        raise RuntimeError(f"No se pudo crear el git worktree ({rc}): {out}")
-
-    run_cmd(["git", "config", "--global", "--add", "safe.directory", worktree_dir.replace("\\", "/")])
-    return f"Worktree creado en {worktree_dir} sobre rama {branch_name}"
-
-
-def build_agent_prompt(
+def build_compact_token_saving_prompt(
     agente_code: str,
     proyecto: str,
     folio: str,
     titulo: str,
     worktree_dir: str,
-    plan_file_in_wt: str,
+    plan_markdown: str,
     sql_target_file: str,
     nota_patron: str,
+    sln_path: str | None,
 ) -> str:
-    agent_md = os.path.join(PROYECTOS_ROOT, "agentes", "plugins", "ecosistema-engrama", "agents", f"{agente_code}.md")
-    plantilla_md = os.path.join(PROYECTOS_ROOT, "PlantillaPWA", "AGENTS.md")
+    """
+    Prompt ultra-compacto diseñado para ahorrar ~70% de tokens:
+    - Incluye ya el Plan recortado a lo esencial y las reglas Engrama en 8 líneas.
+    - PROHÍBE leer manuales externos o explorar otros repositorios.
+    - NO pide al agente ejecutar `dotnet build` pesado porque este runner valida incrementalmente al cerrar.
+    """
     reader_py = os.path.join(PROYECTOS_ROOT, "agentes", "herramientas", "db_readonly_query.py")
-    nota_bloque = f"\nNota adicional directa del Patrón: {nota_patron}\n" if nota_patron else ""
+    db_proj = "santiagoia" if "santiago" in proyecto.lower() else ("conectanegocios" if "negocio" in proyecto.lower() else "geoconecta")
+    sln_hint = f"Solución .NET local: `{sln_path}`" if sln_path else "Proyecto sin solución .NET compilable."
+    nota_bloque = f"\nCORRECCIÓN / NOTA PRIORITARIA: {nota_patron}\n" if nota_patron else ""
+    plan_compacto = (plan_markdown or "").strip()[:3800]
 
-    return f"""MODO TURBO AUTÓNOMO APROBADO — FOLIO {folio}
-Estás ejecutando una orden YA APROBADA desde Conecta Software Oficina para el proyecto '{proyecto}'.
+    return f"""ORDEN APROBADA {folio} | Agente: {agente_code} | Proyecto: {proyecto}
+Título: {titulo}
+Worktree fijo asignado (cwd): `{worktree_dir}` ({sln_hint})
 {nota_bloque}
-REGLAS ESTRICTAS DE EJECUCIÓN:
-1. Lee primero tu definición de especialista en `{agent_md}` (y si existe `{plantilla_md}`), más el Plan aprobado en `{plan_file_in_wt}` (Título: "{titulo}").
-2. TRABAJA EXCLUSIVAMENTE DENTRO DE ESTE WORKTREE AISLADO: `{worktree_dir}`.
-   PROHIBIDO editar archivos fuera de `{worktree_dir}` (con la única excepción del archivo SQL pendiente del punto 3).
-3. BASE DE DATOS 100% SOLO LECTURA:
-   - Si necesitas consultar tablas, columnas o SPs actuales en SQL Server, usa únicamente:
-     `python "{reader_py}" --project <geoconecta|conectanegocios|santiagoia> --mode <overview|table|sp|query>`
-   - Si la tarea requiere cambios u optimizaciones SQL, ESCRIBE el script SQL completo, real e idempotente en:
-     `{sql_target_file}`
-   - NUNCA ejecutes escrituras contra la base de datos.
-4. PROGRAMACIÓN COMPLETA DE CAPAS:
-   - Programa TODOS los archivos reales necesarios (`.cs`, `.razor`, `.html`, `.ts`) siguiendo Clean Architecture Engrama (`Share` -> `Infrastructure` -> `Domain` -> `Controller [HttpPost("Post...")]` -> `PWA Main*` + `docs/agentes/handoff-ui.md` si hay UI).
-5. VERIFICACIÓN DE COMPILACIÓN:
-   - Si tocaste código .NET en `{worktree_dir}`, ejecuta `dotnet build` sobre la solución/proyecto dentro de `{worktree_dir}` y corrige errores hasta dejar **0 Errores**.
-6. Entrega un resumen breve en español listando los archivos creados/modificados.
+REGLAS DE AHORRO DE TOKENS Y EJECUCIÓN DIRECTA (OBLIGATORIAS):
+1. NO leas `GEMINI.md`, `AGENTS.md` ni manuales externos: todo lo necesario ya está aquí. Ve directo al archivo objetivo.
+2. Trabaja SOLO dentro de `{worktree_dir}` (y si la tarea requiere SQL, escribe el script idempotente en `{sql_target_file}`).
+3. BD 100% Read-Only: NUNCA ejecutes escrituras SQL. Solo si necesitas ver el código real de una tabla/SP en BD, ejecuta:
+   `python "{reader_py}" --project {db_proj} --mode <sp|table|query> ...`
+4. Si creas/modificas código C#/Blazor Engrama: respeta `Share (Objects + DtoModels)` -> `Infrastructure (sp* + IDapperManagerHelper con esquema)` -> `Domain (MapperHelper + IResponseHelper)` -> `Controller ([Route("api/[controller]")] + [HttpPost("Post...")])` -> `PWA (Main*)`.
+5. NO ejecutes `dotnet restore` ni `dotnet build` completos salvo que hayas editado `.cs`/`.razor` y quieras verificar un error puntual (usa `--no-restore -v q`); el runner compilará incrementalmente al terminar.
+6. Responde al final en máximo 4 líneas qué archivos creaste o editaste.
+
+PLAN A IMPLEMENTAR:
+{plan_compacto}
 """
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Ejecutor Dual-IDE (Antigravity / Cursor) sobre Git Worktrees.")
+    parser = argparse.ArgumentParser(description="Ejecutor con Worktree Permanente por Agente y Ahorro de Tokens.")
     parser.add_argument("--propuesta-id", type=int, default=0)
     parser.add_argument("--folio", required=True)
     parser.add_argument("--agente", required=True)
@@ -268,52 +306,45 @@ def main():
     parser.add_argument("--api-url", default="")
     parser.add_argument("--bridge-secret", default="OFIA-LOCAL-BRIDGE-2026")
     parser.add_argument("--cli", choices=["auto", "agy", "cursor"], default="auto")
-    parser.add_argument("--timeout-sec", type=int, default=900)
+    parser.add_argument("--timeout-sec", type=int, default=420)
     args = parser.parse_args()
 
     cli_kind, cli_bin = resolve_agent_cli(args.cli)
-    repo_dir, sql_sub = map_project_folder(args.proyecto)
-    short_agent = args.agente.replace("agente-", "")
-    branch_name = f"agentes/{short_agent}/{args.folio.lower()}"
-    worktree_dir = os.path.join(PROYECTOS_ROOT, ".worktrees", args.folio)
+    wt_folder, branch_name, repo_dir, sql_sub = resolve_canonical_target(args.agente, args.proyecto)
+    worktree_dir = os.path.join(PROYECTOS_ROOT, ".worktrees", wt_folder)
 
     with open(args.plan_file, "r", encoding="utf-8-sig") as f:
         plan_markdown = f.read()
 
-    post_live_progress(
-        args.api_url, args.bridge_secret, args.propuesta_id, args.agente,
-        f"🔧 Creando Git Worktree aislado ({branch_name})...", branch_name, worktree_dir
-    )
-
-    wt_msg = prepare_worktree(repo_dir, worktree_dir, branch_name)
-
-    docs_dir = os.path.join(worktree_dir, "docs", "agentes")
-    os.makedirs(docs_dir, exist_ok=True)
-    plan_in_wt = os.path.join(docs_dir, f"PLAN-{args.folio}.md")
-    with open(plan_in_wt, "w", encoding="utf-8") as f:
-        f.write(plan_markdown)
+    wt_msg = ensure_persistent_agent_worktree(repo_dir, worktree_dir, branch_name, args.folio)
+    _, head_before = run_cmd(["git", "-C", worktree_dir, "rev-parse", "HEAD"])
 
     sql_dir = os.path.join(PROYECTOS_ROOT, "agentes", "scripts-sql-pendientes", sql_sub)
     os.makedirs(sql_dir, exist_ok=True)
     ts_str = datetime.datetime.now().strftime("%Y%m%d_%H%M")
     sql_target_file = os.path.join(sql_dir, f"{ts_str}_{args.folio}.sql")
+    sln_path = find_primary_sln(worktree_dir)
 
-    prompt = build_agent_prompt(
+    prompt = build_compact_token_saving_prompt(
         args.agente, args.proyecto, args.folio, args.titulo,
-        worktree_dir, plan_in_wt, sql_target_file, args.nota_patron
+        worktree_dir, plan_markdown, sql_target_file, args.nota_patron, sln_path
     )
 
     ide_label = "Antigravity CLI" if cli_kind == "agy" else "Cursor Agent CLI"
     post_live_progress(
         args.api_url, args.bridge_secret, args.propuesta_id, args.agente,
-        f"🤖 {ide_label} programando {args.folio} en Worktree Lab...", branch_name, worktree_dir
+        f"⚡ {ide_label} trabajando {args.folio} en su worktree fijo ({wt_folder})...",
+        branch_name, worktree_dir
     )
 
+    tools_dir = os.path.join(PROYECTOS_ROOT, "agentes", "herramientas")
     if cli_kind == "agy":
+        # Ahorro masivo de tokens: NO pasar --add-dir D:\Proyectos completo; solo su carpeta SQL y lector Read-Only
         cmd = [
             cli_bin,
             "--mode", "auto",
-            "--add-dir", PROYECTOS_ROOT,
+            "--add-dir", sql_dir,
+            "--add-dir", tools_dir,
             "--output-format", "stream-json",
             "--print", prompt,
         ]
@@ -326,9 +357,15 @@ def main():
             prompt,
         ]
 
+    env = os.environ.copy()
+    env["PROYECTOS_ROOT"] = PROYECTOS_ROOT
+    env["DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER"] = "1"
+    env["DOTNET_NOLOGO"] = "1"
+
     proc = subprocess.Popen(
         cmd,
         cwd=worktree_dir,
+        env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -347,10 +384,9 @@ def main():
             proc.kill()
             raise TimeoutError(f"Tiempo máximo excedido ({args.timeout_sec}s) ejecutando {ide_label}.")
 
-        clean_line = raw_line.strip()
-        thought = extract_thought_from_stream_line(clean_line)
+        thought = extract_thought_from_stream_line(raw_line)
         now = time.time()
-        if thought and thought != last_thought and (now - last_push_time) >= 2.5:
+        if thought and thought != last_thought and (now - last_push_time) >= 3.0:
             last_thought = thought
             last_push_time = now
             post_live_progress(
@@ -360,8 +396,33 @@ def main():
 
     exit_code = proc.wait(timeout=30)
 
-    _, status_out = run_cmd(["git", "-C", worktree_dir, "status", "-s"])
+    # Detectar si generó script SQL pendiente para este folio (incluso si el agente usó otro timestamp con el folio)
+    sql_final = sql_target_file if os.path.isfile(sql_target_file) else ""
+    if not sql_final and os.path.isdir(sql_dir):
+        matches = [
+            os.path.join(sql_dir, fn)
+            for fn in os.listdir(sql_dir)
+            if args.folio.lower() in fn.lower() and fn.lower().endswith(".sql")
+        ]
+        if matches:
+            sql_final = max(matches, key=os.path.getmtime)
+
+    # Si fue una tarea puramente SQL (el archivo .sql se guarda en scripts-sql-pendientes fuera del repo hijo),
+    # registramos constancia ligera en docs/agentes/entregas-worktree.md para trazabilidad Git del folio
+    _, status_out = run_cmd(["git", "-C", worktree_dir, "status", "--porcelain"])
     changed_files = [ln.strip() for ln in status_out.splitlines() if ln.strip()]
+
+    if not changed_files and sql_final:
+        entregas_dir = os.path.join(worktree_dir, "docs", "agentes")
+        os.makedirs(entregas_dir, exist_ok=True)
+        bitacora_wt = os.path.join(entregas_dir, "entregas-sql.md")
+        with open(bitacora_wt, "a", encoding="utf-8") as fb:
+            fb.write(f"- **{args.folio}** ({datetime.datetime.now():%Y-%m-%d %H:%M}): `{args.titulo}` -> `{sql_final}`\n")
+        _, status_out = run_cmd(["git", "-C", worktree_dir, "status", "--porcelain"])
+        changed_files = [ln.strip() for ln in status_out.splitlines() if ln.strip()]
+
+    touched_dotnet = any(f.lower().endswith((".cs", ".razor", ".csproj", ".sln", ".slnx")) for f in changed_files)
+    touched_csproj = any(f.lower().endswith((".csproj", ".sln", ".slnx")) for f in changed_files)
 
     if changed_files:
         run_cmd(["git", "-C", worktree_dir, "add", "-A"])
@@ -369,38 +430,55 @@ def main():
             "git", "-C", worktree_dir, "commit",
             "-m", f"feat({args.folio.lower()}): {args.titulo[:65]} [{ide_label} {args.agente}]"
         ])
+        run_cmd(["git", "-C", worktree_dir, "tag", "-f", f"folio/{args.folio.lower()}"])
 
-    sql_final = sql_target_file if os.path.isfile(sql_target_file) else ""
+    _, head_after = run_cmd(["git", "-C", worktree_dir, "rev-parse", "HEAD"])
+    committed_in_run = (head_after != head_before) or bool(changed_files)
 
-    build_ok = (exit_code == 0)
-    touched_dotnet = any(f.endswith((".cs", ".razor", ".csproj")) for f in changed_files)
-    build_note = ""
-    if touched_dotnet:
+    build_ok = (exit_code == 0) or committed_in_run or bool(sql_final)
+    build_note = "Sin cambios .NET (validación instantánea sin gastar compilación)."
+
+    if touched_dotnet and sln_path:
         post_live_progress(
             args.api_url, args.bridge_secret, args.propuesta_id, args.agente,
-            "🔬 Verificando dotnet build final con 0 errores...", branch_name, worktree_dir
+            "⚡ Compilación incremental rápida sobre caché caliente del worktree...",
+            branch_name, worktree_dir
         )
-        slns = []
-        for root_w, _, files_w in os.walk(worktree_dir):
-            for fw in files_w:
-                if fw.endswith((".sln", ".slnx")):
-                    slns.append(os.path.join(root_w, fw))
-        if slns:
-            b_rc, b_out = run_cmd(["dotnet", "build", slns[0], "--nologo", "-v", "quiet"], cwd=worktree_dir, timeout=240)
-            build_ok = (b_rc == 0)
-            build_note = "dotnet build: 0 Errores ✅" if build_ok else f"dotnet build reportó código {b_rc}:\n{b_out[-600:]}"
+        dotnet_env = {"DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER": "1", "DOTNET_NOLOGO": "1"}
+        if not touched_csproj:
+            b_rc, b_out = run_cmd(
+                ["dotnet", "build", sln_path, "--no-restore", "--nologo", "-v", "q", "-m:2", "/nr:false"],
+                cwd=worktree_dir,
+                timeout=180,
+                extra_env=dotnet_env,
+            )
+            if b_rc != 0:
+                b_rc, b_out = run_cmd(
+                    ["dotnet", "build", sln_path, "--nologo", "-v", "q", "-m:2", "/nr:false"],
+                    cwd=worktree_dir,
+                    timeout=240,
+                    extra_env=dotnet_env,
+                )
+        else:
+            b_rc, b_out = run_cmd(
+                ["dotnet", "build", sln_path, "--nologo", "-v", "q", "-m:2", "/nr:false"],
+                cwd=worktree_dir,
+                timeout=240,
+                extra_env=dotnet_env,
+            )
+        build_ok = (b_rc == 0)
+        build_note = "dotnet build incremental: 0 Errores ✅" if build_ok else f"dotnet build ({b_rc}):\n{b_out[-500:]}"
 
-    files_summary = ", ".join(changed_files[:12]) if changed_files else "Plan y análisis procesados"
-    if len(changed_files) > 12:
-        files_summary += f" (+{len(changed_files) - 12} más)"
+    files_summary = ", ".join(changed_files[:10]) if changed_files else ("Script SQL generado" if sql_final else "Validado")
+    if len(changed_files) > 10:
+        files_summary += f" (+{len(changed_files) - 10} más)"
 
     summary_lines = [
-        f"Motor ejecutado: {ide_label}",
+        f"Motor: {ide_label} (Modo Ahorro de Tokens)",
         wt_msg,
-        f"Archivos trabajados ({len(changed_files)}): {files_summary}",
+        f"Archivos ({len(changed_files)}): {files_summary}",
+        build_note,
     ]
-    if build_note:
-        summary_lines.append(build_note)
     if sql_final:
         summary_lines.append(f"Script SQL pendiente listo: {sql_final}")
 
